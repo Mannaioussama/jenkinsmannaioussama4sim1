@@ -16,6 +16,8 @@ pipeline {
 
         stage('Build JAR') {
             steps {
+                // ✅ Give execution permission to mvnw
+                sh 'chmod +x mvnw'
                 sh './mvnw clean package -DskipTests'
             }
         }
