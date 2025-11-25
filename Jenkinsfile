@@ -1,21 +1,40 @@
 pipeline {
     agent any
 
-    triggers {
-        githubPush()
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
+        IMAGE_NAME = "mannaioussama/student-management"
     }
 
     stages {
-        stage('Clone') {
+
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Mannaioussama/jenkinsmannaioussama4sim1.git'
+                checkout scm
             }
         }
 
-        stage('Build') {
+        stage('Build JAR') {
             steps {
-                echo "Building the project..."
-                sh "mvn clean install -DskipTests"
+                sh './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${IMAGE_NAME}:latest ."
+            }
+        }
+
+        stage('Login to Docker Hub') {
+            steps {
+                sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                sh "docker push ${IMAGE_NAME}:latest"
             }
         }
     }
