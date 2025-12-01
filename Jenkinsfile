@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
         IMAGE_NAME = "mannaioussama/student-management"
+        SONAR_TOKEN = credentials('sonar-token')
     }
 
     stages {
@@ -16,9 +17,21 @@ pipeline {
 
         stage('Build JAR') {
             steps {
-                // ✅ Give execution permission to mvnw
                 sh 'chmod +x mvnw'
                 sh './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh """
+                       ./mvnw sonar:sonar \
+                        -Dsonar.projectKey=student-management \
+                        -Dsonar.host.url=http://192.168.33.10:9000 \
+                        -Dsonar.login=${SONAR_TOKEN}
+                    """
+                }
             }
         }
 
